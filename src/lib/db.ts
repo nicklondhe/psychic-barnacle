@@ -2,9 +2,9 @@ import Dexie, { type Table } from 'dexie';
 
 export interface WaterEntry {
   id?: number;
-  date: string; // YYYY-MM-DD
+  date: string;
   amount_ml: number;
-  logged_at: string; // ISO string
+  logged_at: string;
 }
 
 export interface Book {
@@ -60,7 +60,7 @@ export interface ProgressPhoto {
 
 export interface DailyCheckin {
   id?: number;
-  date: string; // unique per day
+  date: string;
   no_alcohol: boolean;
   no_cheat_meal: boolean;
   updated_at: string;
@@ -68,7 +68,13 @@ export interface DailyCheckin {
 
 export interface ChallengeConfig {
   id?: number;
-  start_date: string; // YYYY-MM-DD
+  start_date: string;
+}
+
+// Manually marked complete days (for backfilling past days)
+export interface CompletedDay {
+  id?: number;
+  date: string; // unique
 }
 
 class TrackerDatabase extends Dexie {
@@ -80,6 +86,7 @@ class TrackerDatabase extends Dexie {
   progressPhotos!: Table<ProgressPhoto>;
   dailyCheckins!: Table<DailyCheckin>;
   challengeConfig!: Table<ChallengeConfig>;
+  completedDays!: Table<CompletedDay>;
 
   constructor() {
     super('75hard');
@@ -92,6 +99,18 @@ class TrackerDatabase extends Dexie {
       progressPhotos: '++id, &date',
       dailyCheckins: '++id, &date',
       challengeConfig: '++id',
+    });
+    // v2 adds completedDays for backfilling past days
+    this.version(2).stores({
+      waterEntries: '++id, date',
+      books: '++id, is_active',
+      readingLogs: '++id, book_id, date',
+      workouts: '++id, date, type',
+      dietEntries: '++id, date',
+      progressPhotos: '++id, &date',
+      dailyCheckins: '++id, &date',
+      challengeConfig: '++id',
+      completedDays: '++id, &date',
     });
   }
 }
